@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build-ol": "rm -rf node_modules/ol/build && mkdir -p node_modules/ol/build && cp -rf node_modules/ol/src/ol node_modules/ol/build && node node_modules/ol/tasks/serialize-workers.cjs",
-    "start": "npm run build-ol && parcel src/index.html"
+    "build-ol-mapbox-style": "rm -rf node_modules/ol-mapbox-style/build && mkdir -p node_modules/ol-mapbox-style/build && cp -rf node_modules/ol-mapbox-style/dist/*.js node_modules/ol-mapbox-style/build && sed -i \"s#from 'ol#from 'ol/build/ol#g\" node_modules/ol-mapbox-style/build/*.js",
+    "start": "npm run build-ol && npm run build-ol-mapbox-style && parcel src/index.html"
   },
   "repository": {
     "type": "git",
@@ -22,6 +23,7 @@
     "@rollup/plugin-node-resolve": "^15.0.0",
     "fs-extra": "^11.1.0",
     "ol": "github:openlayers/openlayers#25d45b9",
+    "ol-mapbox-style": "^10.2.0",
     "rollup": "^2.42.3",
     "rollup-plugin-external-globals": "^0.7.1",
     "rollup-plugin-terser": "^7.0.2",

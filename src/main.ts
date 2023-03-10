@@ -9,6 +9,7 @@ import WebGLVectorTileLayerRenderer from 'ol/build/ol/renderer/webgl/VectorTileL
 import MVT from 'ol/build/ol/format/MVT'
 import {asArray} from 'ol/build/ol/color';
 import {packColor} from 'ol/build/ol/renderer/webgl/shaders';
+import {applyStyle} from 'ol-mapbox-style/build/index'
 
 class WebGLVectorTileLayer extends VectorTileLayer {
   createRenderer() {
@@ -16,7 +17,10 @@ class WebGLVectorTileLayer extends VectorTileLayer {
       fill: {
         attributes: {
           color: (feature) => {
-            return packColor('#aaa');
+            const styles = this.getStyle()(feature, 1);
+            const style = styles?.[0];
+            const color = asArray(style?.getFill()?.getColor() || '#eee');
+            return packColor(color);
           },
           opacity: () => 1,
         },
@@ -24,10 +28,15 @@ class WebGLVectorTileLayer extends VectorTileLayer {
       stroke: {
         attributes: {
           color: (feature) => {
-            return packColor('#eee');
+            const styles = this.getStyle()(feature, 1);
+            const style = styles?.[0];
+            const color = asArray(style?.getStroke()?.getColor() || '#eee');
+            return packColor(color);
           },
           width: (feature) => {
-            return 1;
+            const styles = this.getStyle()(feature, 1);
+            const style = styles?.[0];
+            return Math.min(1, style?.getStroke()?.getWidth() || 0);
           },
           opacity: () => 1,
         },
@@ -41,25 +50,40 @@ class WebGLVectorTileLayer extends VectorTileLayer {
   }
 }
 
-const vectorTileLayer = new WebGLVectorTileLayer({
-  source: new VectorTileSource({
-    format: new MVT(),
-    url: 'https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/tiles/v1/bm_web_de_3857/{z}/{x}/{y}.pbf'
-  }),
-})
-
-const map = new Map({
-  target: 'map',
-  view: new View({
-    zoom: 2,
-    center: [0, 0],
-  }),
-  layers: [
-    new WebGLTileLayer({
-      source: new OSM({
-        wrapX: false
-      })
+async function initMap() {
+  const vectorTileLayer = new WebGLVectorTileLayer({
+    source: new VectorTileSource({
+      format: new MVT(),
+      url: 'https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/tiles/v1/bm_web_de_3857/{z}/{x}/{y}.pbf'
     }),
-    vectorTileLayer
-  ],
-})
+  })
+
+  await applyStyle(vectorTileLayer, 'https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json')
+
+  const map = new Map({
+    target: 'map',
+    view: new View({
+      // view values taken from https://test.geoportal-hamburg.de/basemapDE/config.json
+      zoom: 1,
+      center: [
+        1151447.39,
+        6643906.50
+      ],
+      extent: [
+        82152,
+        5655078,
+        2192608,
+        7583763
+      ]
+    }),
+    layers: [
+      new WebGLTileLayer({
+        source: new OSM({
+          wrapX: false
+        })
+      }),
+      vectorTileLayer
+    ],
+  })
+}
+initMap()
