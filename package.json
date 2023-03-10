@@ -1,0 +1,26 @@
+{
+  "name": "hamburg-vector-tiles-demo-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/camptocamp/hamburg-vector-tiles-demo-app.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/camptocamp/hamburg-vector-tiles-demo-app/issues"
+  },
+  "homepage": "https://github.com/camptocamp/hamburg-vector-tiles-demo-app#readme",
+  "dependencies": {
+    "ol": "github:openlayers/openlayers#25d45b9",
+    "typescript": "^4.9.5"
+  },
+  "devDependencies": {
+    "parcel": "^2.8.3"
+  }
+}
