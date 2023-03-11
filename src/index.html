@@ -13,10 +13,40 @@
           width: 100vw;
           height: 100vh;
       }
+      .btn-group {
+          position: absolute;
+          top: 12px;
+          left: 0;
+          right: 0;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          gap: 12px;
+      }
+      .btn {
+          cursor: pointer;
+          padding: 6px 14px;
+          font-size: 14px;
+      }
+      .btn.toggled {
+          border: 1px solid darkblue;
+          border-radius: 2px;
+          background: white;
+          color: darkblue;
+          outline: 4px solid rgba(0, 0, 139, 0.38);
+      }
   </style>
 </head>
 <body>
   <div id="map"></div>
+  <div class="btn-group">
+    <button type="button" class="btn canvas">
+      canvas
+    </button>
+    <button type="button" class="btn analyzer">
+      analyzer
+    </button>
+  </div>
   <script type="module" src="./main.ts"></script>
 </body>
 </html>

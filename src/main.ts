@@ -9,6 +9,7 @@ import WebGLVectorTileLayerRenderer from 'ol/build/ol/renderer/webgl/VectorTileL
 import CanvasVectorTileLayerRenderer from 'ol/build/ol/renderer/canvas/VectorTileLayer'
 import MVT from 'ol/build/ol/format/MVT'
 import {asArray} from 'ol/build/ol/color';
+import Link from 'ol/build/ol/interaction/Link';
 import {packColor} from 'ol/build/ol/renderer/webgl/shaders';
 import MixedGeometryBatch from 'ol/build/ol/render/webgl/MixedGeometryBatch';
 import TileGeometry from 'ol/build/ol/webgl/TileGeometry';
@@ -61,6 +62,25 @@ const params = new URL(window.location).searchParams
 const useCanvas = params.get('canvas') !== null
 const showAnalyzer = params.get('analyzer') !== null
 
+const btnCanvas = document.querySelector('.btn.canvas')
+const btnAnalyzer = document.querySelector('.btn.analyzer')
+btnCanvas.textContent = `Default renderer (canvas) ${useCanvas ? 'enabled' : 'disabled'}`
+btnCanvas.classList.toggle('toggled', useCanvas)
+btnAnalyzer.textContent = `Performance analyzer ${showAnalyzer ? 'enabled' : 'disabled'}`
+btnAnalyzer.classList.toggle('toggled', showAnalyzer)
+btnCanvas.addEventListener('click', () => {
+  const newUrl = new URL(window.location)
+  if (useCanvas) newUrl.searchParams.delete('canvas')
+  else newUrl.searchParams.set('canvas', '')
+  window.location = newUrl.toString()
+})
+btnAnalyzer.addEventListener('click', () => {
+  const newUrl = new URL(window.location)
+  if (showAnalyzer) newUrl.searchParams.delete('analyzer')
+  else newUrl.searchParams.set('analyzer', '')
+  window.location = newUrl.toString()
+})
+
 async function initMap() {
   const source = new VectorTileSource({
     format: new MVT(),
@@ -112,16 +132,19 @@ async function initMap() {
         5655078,
         2192608,
         7583763
-      ]
+      ],
+      showFullExtent: true
     }),
     layers: [
       new WebGLTileLayer({
         source: new OSM({
           wrapX: false
-        })
+        }),
+        opacity: 0.25
       }),
       vectorTileLayer
     ],
   })
+  map.addInteraction(new Link())
 }
 initMap()
