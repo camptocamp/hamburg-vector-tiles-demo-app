@@ -6,7 +6,7 @@
     "build-ol": "rm -rf node_modules/ol/build && mkdir -p node_modules/ol/build && cp -rf node_modules/ol/src/ol node_modules/ol/build && node node_modules/ol/tasks/serialize-workers.cjs",
     "build-ol-mapbox-style": "rm -rf node_modules/ol-mapbox-style/build && mkdir -p node_modules/ol-mapbox-style/build && cp -rf node_modules/ol-mapbox-style/dist/*.js node_modules/ol-mapbox-style/build && sed -i \"s#from 'ol#from 'ol/build/ol#g\" node_modules/ol-mapbox-style/build/*.js",
     "start": "npm run build-ol && npm run build-ol-mapbox-style && parcel src/index.html",
-    "build": "npm run build-ol && npm run build-ol-mapbox-style && parcel build src/index.html"
+    "build": "npm run build-ol && npm run build-ol-mapbox-style && parcel build src/index.html --public-url=./"
   },
   "repository": {
     "type": "git",
