@@ -2,11 +2,11 @@
   "name": "hamburg-vector-tiles-demo-app",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "build-ol": "rm -rf node_modules/ol/build && mkdir -p node_modules/ol/build && cp -rf node_modules/ol/src/ol node_modules/ol/build && node node_modules/ol/tasks/serialize-workers.cjs",
     "build-ol-mapbox-style": "rm -rf node_modules/ol-mapbox-style/build && mkdir -p node_modules/ol-mapbox-style/build && cp -rf node_modules/ol-mapbox-style/dist/*.js node_modules/ol-mapbox-style/build && sed -i \"s#from 'ol#from 'ol/build/ol#g\" node_modules/ol-mapbox-style/build/*.js",
-    "start": "npm run build-ol && npm run build-ol-mapbox-style && parcel src/index.html"
+    "start": "npm run build-ol && npm run build-ol-mapbox-style && parcel src/index.html",
+    "build": "npm run build-ol && npm run build-ol-mapbox-style && parcel build src/index.html"
   },
   "repository": {
     "type": "git",
@@ -19,16 +19,16 @@
   },
   "homepage": "https://github.com/camptocamp/hamburg-vector-tiles-demo-app#readme",
   "dependencies": {
+    "@camptocamp/rendering-analyzer": "^0.1.1",
     "ol": "github:openlayers/openlayers#25d45b9",
-    "ol-mapbox-style": "^10.2.0",
-    "@camptocamp/rendering-analyzer": "^0.1.0"
+    "ol-mapbox-style": "^10.2.0"
   },
   "devDependencies": {
-    "buffer": "^5.7.1",
-    "parcel": "^2.8.3",
     "@rollup/plugin-commonjs": "^24.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
+    "buffer": "^5.7.1",
     "fs-extra": "^11.1.0",
+    "parcel": "^2.8.3",
     "rollup": "^2.42.3",
     "rollup-plugin-external-globals": "^0.7.1",
     "rollup-plugin-terser": "^7.0.2",
