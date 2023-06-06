@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build-ol": "rm -rf node_modules/ol/build && mkdir -p node_modules/ol/build && cp -rf node_modules/ol/src/ol node_modules/ol/build && node node_modules/ol/tasks/serialize-workers.cjs",
-    "build-ol-mapbox-style": "rm -rf node_modules/ol-mapbox-style/build && mkdir -p node_modules/ol-mapbox-style/build && cp -rf node_modules/ol-mapbox-style/dist/*.js node_modules/ol-mapbox-style/build && sed -i \"s#from 'ol#from 'ol/build/ol#g\" node_modules/ol-mapbox-style/build/*.js",
-    "start": "npm run build-ol && npm run build-ol-mapbox-style && parcel src/index.html",
-    "build": "npm run build-ol && npm run build-ol-mapbox-style && parcel build src/index.html --public-url=./ --no-scope-hoist --no-optimize"
+    "prebuild-ol": "rm -rf node_modules/ol/build && mkdir -p node_modules/ol/build && cp -rf node_modules/ol/src/ol node_modules/ol/build && node node_modules/ol/tasks/serialize-workers.cjs",
+    "prebuild-ol-mapbox-style": "rm -rf node_modules/ol-mapbox-style/build && mkdir -p node_modules/ol-mapbox-style/build && cp -rf node_modules/ol-mapbox-style/dist/*.js node_modules/ol-mapbox-style/build && sed -i \"s#from 'ol#from 'ol/build/ol#g\" node_modules/ol-mapbox-style/build/*.js",
+    "prebuild-ol-maplibre-layer": "rm -rf node_modules/@geoblocks/ol-maplibre-layer/build && mkdir -p node_modules/@geoblocks/ol-maplibre-layer/build && cp -rf node_modules/@geoblocks/ol-maplibre-layer/dist/*.js node_modules/@geoblocks/ol-maplibre-layer/build && sed -i 's#from \"ol#from \"ol/build/ol#g' node_modules/@geoblocks/ol-maplibre-layer/build/*.js",
+    "prebuild": "npm run prebuild-ol && npm run prebuild-ol-mapbox-style && npm run prebuild-ol-maplibre-layer",
+    "start": "npm run prebuild && parcel src/index.html",
+    "build": "npm run prebuild && parcel build src/index.html --public-url=./ --no-scope-hoist --no-optimize"
   },
   "repository": {
     "type": "git",
@@ -20,7 +22,8 @@
   "homepage": "https://github.com/camptocamp/hamburg-vector-tiles-demo-app#readme",
   "dependencies": {
     "@camptocamp/rendering-analyzer": "^0.1.1",
-    "ol": "github:openlayers/openlayers#25d45b9",
+    "@geoblocks/ol-maplibre-layer": "^0.1.1",
+    "ol": "github:openlayers/openlayers#4122d13",
     "ol-mapbox-style": "^10.2.0"
   },
   "devDependencies": {

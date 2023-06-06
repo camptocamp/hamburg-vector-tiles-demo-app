@@ -10,7 +10,7 @@ import CanvasVectorTileLayerRenderer from 'ol/build/ol/renderer/canvas/VectorTil
 import MVT from 'ol/build/ol/format/MVT'
 import {asArray} from 'ol/build/ol/color';
 import Link from 'ol/build/ol/interaction/Link';
-import {packColor} from 'ol/build/ol/renderer/webgl/shaders';
+import {packColor, parseLiteralStyle} from 'ol/build/ol/webgl/styleparser';
 import MixedGeometryBatch from 'ol/build/ol/render/webgl/MixedGeometryBatch';
 import TileGeometry from 'ol/build/ol/webgl/TileGeometry';
 import BuilderGroup from 'ol/build/ol/render/canvas/BuilderGroup';
@@ -18,62 +18,96 @@ import ExecutorGroup from 'ol/build/ol/render/canvas/ExecutorGroup';
 import CompositeMapRenderer from 'ol/build/ol/renderer/Composite';
 import {applyStyle} from 'ol-mapbox-style/build/index'
 import {defineFrameContainer, trackPerformance, showTable, showGraph} from '@camptocamp/rendering-analyzer'
+import MapLibreLayer from '@geoblocks/ol-maplibre-layer/build/ol-maplibre-layer'
 
 class WebGLVectorTileLayer extends VectorTileLayer {
   createRenderer() {
+    const result = parseLiteralStyle({
+      'fill-color': ['get', 'fillColor'],
+      'stroke-color': ['get', 'strokeColor'],
+      'stroke-width': ['get', 'strokeWidth'],
+      symbol: {
+        symbolType: 'circle',
+        size: 8,
+        color: '#777',
+      },
+    });
     return new WebGLVectorTileLayerRenderer(this, {
-      fill: {
-        attributes: {
-          color: (feature) => {
-            const styles = this.getStyle()(feature, 1);
-            const style = styles?.[0];
-            const color = asArray(style?.getFill()?.getColor() || '#eee');
-            return packColor(color);
+      style: {
+          fill: {
+            fragment: result.builder.getFillFragmentShader(),
+            vertex: result.builder.getFillVertexShader(),
           },
-          opacity: () => 1,
-        },
-      },
-      stroke: {
-        attributes: {
-          color: (feature) => {
-            const styles = this.getStyle()(feature, 1);
-            const style = styles?.[0];
-            const color = asArray(style?.getStroke()?.getColor() || '#eee');
-            return packColor(color);
+          stroke: {
+            fragment: result.builder.getStrokeFragmentShader(),
+            vertex: result.builder.getStrokeVertexShader(),
           },
-          width: (feature) => {
-            const styles = this.getStyle()(feature, 1);
-            const style = styles?.[0];
-            return Math.min(1, style?.getStroke()?.getWidth() || 0);
+          symbol: {
+            fragment: result.builder.getSymbolFragmentShader(),
+            vertex: result.builder.getSymbolVertexShader(),
           },
-          opacity: () => 1,
-        },
-      },
-      point: {
-        attributes: {
-          color: () => packColor(asArray('#777')),
-        },
-      },
+          attributes: {
+            fillColor: {
+              size: 2,
+              callback: (feature) => {
+                const style = this.getStyle()(feature, 1)?.[0];
+                const color = asArray(style?.getFill()?.getColor() || '#eee');
+                return packColor(color);
+              },
+            },
+            strokeColor: {
+              size: 2,
+              callback: (feature) => {
+                const style = this.getStyle()(feature, 1)?.[0];
+                const color = asArray(style?.getStroke()?.getColor() || '#eee');
+                return packColor(color);
+              },
+            },
+            strokeWidth: {
+              size: 1,
+              callback: (feature) => {
+                const style = this.getStyle()(feature, 1)?.[0];
+                return Math.min(1, style?.getStroke()?.getWidth() || 0);
+              },
+            },
+          },
+      }
     });
   }
 }
 
 const params = new URL(window.location).searchParams
-const useCanvas = params.get('canvas') !== null
+const renderer: 'webgl' | 'canvas' | 'maplibre' = params.has('renderer') ?
+  params.get('renderer') as 'webgl' | 'canvas' | 'maplibre' :
+  'webgl'
 const showAnalyzer = params.get('analyzer') !== null
 
-const btnCanvas = document.querySelector('.btn.canvas')
-const btnAnalyzer = document.querySelector('.btn.analyzer')
-btnCanvas.textContent = `Default renderer (canvas) ${useCanvas ? 'enabled' : 'disabled'}`
-btnCanvas.classList.toggle('toggled', useCanvas)
-btnAnalyzer.textContent = `Performance analyzer ${showAnalyzer ? 'enabled' : 'disabled'}`
-btnAnalyzer.classList.toggle('toggled', showAnalyzer)
-btnCanvas.addEventListener('click', () => {
+const btnWebgl = document.querySelector('.btn[data-renderer=webgl]')
+const btnCanvas = document.querySelector('.btn[data-renderer=canvas]')
+const btnMaplibre = document.querySelector('.btn[data-renderer=maplibre]')
+const btnAnalyzer = document.querySelector('.btn[data-analyzer]')
+switch(renderer) {
+  case 'webgl': btnWebgl.classList.add('toggled'); break;
+  case 'canvas': btnCanvas.classList.add('toggled'); break;
+  case 'maplibre': btnMaplibre.classList.add('toggled'); break;
+}
+btnWebgl.addEventListener('click', () => {
   const newUrl = new URL(window.location)
-  if (useCanvas) newUrl.searchParams.delete('canvas')
-  else newUrl.searchParams.set('canvas', '')
+  newUrl.searchParams.set('renderer', 'webgl')
   window.location = newUrl.toString()
 })
+btnCanvas.addEventListener('click', () => {
+  const newUrl = new URL(window.location)
+  newUrl.searchParams.set('renderer', 'canvas')
+  window.location = newUrl.toString()
+})
+btnMaplibre.addEventListener('click', () => {
+  const newUrl = new URL(window.location)
+  newUrl.searchParams.set('renderer', 'maplibre')
+  window.location = newUrl.toString()
+})
+
+btnAnalyzer.classList.toggle('toggled', showAnalyzer)
 btnAnalyzer.addEventListener('click', () => {
   const newUrl = new URL(window.location)
   if (showAnalyzer) newUrl.searchParams.delete('analyzer')
@@ -81,33 +115,36 @@ btnAnalyzer.addEventListener('click', () => {
   window.location = newUrl.toString()
 })
 
+const STYLE_URL = 'https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json'
+
 async function initMap() {
-  const source = new VectorTileSource({
-    format: new MVT(),
-    url: 'https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/tiles/v1/bm_web_de_3857/{z}/{x}/{y}.pbf'
-  })
   let vectorTileLayer
-  if (useCanvas) {
+  if (renderer === 'canvas') {
     vectorTileLayer = new VectorTileLayer({
-      source,
       declutter: true
     })
+    await applyStyle(vectorTileLayer, STYLE_URL)
+  } else if (renderer === 'webgl') {
+    vectorTileLayer = new WebGLVectorTileLayer({})
+    await applyStyle(vectorTileLayer, STYLE_URL)
   } else {
-    vectorTileLayer = new WebGLVectorTileLayer({
-      source
-    })
+    vectorTileLayer = new MapLibreLayer({
+      maplibreOptions: {
+        style: STYLE_URL,
+      },
+    });
   }
 
   if (showAnalyzer) {
     defineFrameContainer(CompositeMapRenderer, 'renderFrame');
     trackPerformance(VectorTileSource);
-    if (useCanvas) {
+    if (renderer === 'canvas') {
       trackPerformance(BuilderGroup);
       trackPerformance(ExecutorGroup);
       trackPerformance(CanvasVectorTileLayerRenderer);
       trackPerformance(VectorTileLayer);
     }
-    else {
+    else if (renderer === 'webgl') {
       trackPerformance(TileGeometry);
       trackPerformance(MixedGeometryBatch);
       trackPerformance(WebGLVectorTileLayerRenderer);
@@ -115,8 +152,6 @@ async function initMap() {
     showGraph();
     showTable();
   }
-
-  await applyStyle(vectorTileLayer, 'https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json')
 
   const map = new Map({
     target: 'map',
