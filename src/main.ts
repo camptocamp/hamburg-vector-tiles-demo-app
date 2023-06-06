@@ -7,7 +7,6 @@ import WebGLTileLayer from 'ol/build/ol/layer/WebGLTile'
 import VectorTileLayer from 'ol/build/ol/layer/VectorTile'
 import WebGLVectorTileLayerRenderer from 'ol/build/ol/renderer/webgl/VectorTileLayer'
 import CanvasVectorTileLayerRenderer from 'ol/build/ol/renderer/canvas/VectorTileLayer'
-import MVT from 'ol/build/ol/format/MVT'
 import {asArray} from 'ol/build/ol/color';
 import Link from 'ol/build/ol/interaction/Link';
 import {packColor, parseLiteralStyle} from 'ol/build/ol/webgl/styleparser';
@@ -51,7 +50,11 @@ class WebGLVectorTileLayer extends VectorTileLayer {
               size: 2,
               callback: (feature) => {
                 const style = this.getStyle()(feature, 1)?.[0];
-                const color = asArray(style?.getFill()?.getColor() || '#eee');
+                let colorLike = style?.getFill()?.getColor();
+                if (!colorLike || colorLike instanceof CanvasPattern) {
+                  colorLike = '#eee';
+                }
+                const color = asArray(colorLike);
                 return packColor(color);
               },
             },
@@ -59,7 +62,11 @@ class WebGLVectorTileLayer extends VectorTileLayer {
               size: 2,
               callback: (feature) => {
                 const style = this.getStyle()(feature, 1)?.[0];
-                const color = asArray(style?.getStroke()?.getColor() || '#eee');
+                let colorLike = style?.getStroke()?.getColor();
+                if (!colorLike || colorLike instanceof CanvasPattern) {
+                  colorLike = '#eee';
+                }
+                const color = asArray(colorLike);
                 return packColor(color);
               },
             },
@@ -115,7 +122,8 @@ btnAnalyzer.addEventListener('click', () => {
   window.location = newUrl.toString()
 })
 
-const STYLE_URL = 'https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json'
+// const STYLE_URL = 'https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json'
+const STYLE_URL = 'https://xplanung.ldproxy.devops.diplanung.de/rest/services/xplansyn/styles/xplansyn?f=mbs'
 
 async function initMap() {
   let vectorTileLayer
@@ -123,10 +131,10 @@ async function initMap() {
     vectorTileLayer = new VectorTileLayer({
       declutter: true
     })
-    await applyStyle(vectorTileLayer, STYLE_URL)
+    await applyStyle(vectorTileLayer, STYLE_URL, {accessTokenParam: 'f', accessToken: 'mvt'})
   } else if (renderer === 'webgl') {
     vectorTileLayer = new WebGLVectorTileLayer({})
-    await applyStyle(vectorTileLayer, STYLE_URL)
+    await applyStyle(vectorTileLayer, STYLE_URL, {accessTokenParam: 'f', accessToken: 'mvt'})
   } else {
     vectorTileLayer = new MapLibreLayer({
       maplibreOptions: {
