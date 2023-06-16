@@ -715,18 +715,13 @@ export const XPlanStyles: LiteralStyle[] = base.layers
       filters.push([">", ["zoom"], layer.minzoom]);
     }
 
-    const style = {
-      "stroke-color": "transparent",
-      "fill-color": "transparent",
-      "stroke-width": 1,
-    };
+    const style = {};
     const props = { ...layer.paint, ...layer.layout };
     for (const prop in props) {
       const value = fixExpression(props[prop]);
       switch (prop) {
         case "fill-outline-color":
           style["stroke-color"] = value;
-          style["stroke-width"] = 1;
           break;
         case "fill-color":
           style["fill-color"] = value;
@@ -741,7 +736,6 @@ export const XPlanStyles: LiteralStyle[] = base.layers
           style["symbol"] = {
             symbolType: "square",
             size: value,
-            color: "#777777",
           };
           break;
       }

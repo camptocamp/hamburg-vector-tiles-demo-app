@@ -6,10 +6,9 @@ import VectorTileSource from "ol/build/ol/source/VectorTile";
 import WebGLTileLayer from "ol/build/ol/layer/WebGLTile";
 import VectorTileLayer from "ol/build/ol/layer/VectorTile";
 import WebGLVectorTileLayerRenderer from "ol/build/ol/renderer/webgl/VectorTileLayer";
+import VectorStyleRenderer from "ol/build/ol/render/webgl/VectorStyleRenderer";
 import CanvasVectorTileLayerRenderer from "ol/build/ol/renderer/canvas/VectorTileLayer";
-import { asArray } from "ol/build/ol/color";
 import Link from "ol/build/ol/interaction/Link";
-import { packColor, parseLiteralStyle } from "ol/build/ol/webgl/styleparser";
 import MixedGeometryBatch from "ol/build/ol/render/webgl/MixedGeometryBatch";
 import TileGeometry from "ol/build/ol/webgl/TileGeometry";
 import BuilderGroup from "ol/build/ol/render/canvas/BuilderGroup";
@@ -18,9 +17,9 @@ import CompositeMapRenderer from "ol/build/ol/renderer/Composite";
 import { applyStyle } from "ol-mapbox-style/build/index";
 import {
   defineFrameContainer,
-  trackPerformance,
-  showTable,
   showGraph,
+  showTable,
+  trackPerformance,
 } from "@camptocamp/rendering-analyzer";
 import MapLibreLayer from "@geoblocks/ol-maplibre-layer/build/ol-maplibre-layer";
 import { XPlanStyles } from "./xplan-styles";
@@ -117,6 +116,7 @@ async function initMap() {
     } else if (renderer === "webgl") {
       trackPerformance(TileGeometry);
       trackPerformance(MixedGeometryBatch);
+      trackPerformance(VectorStyleRenderer);
       trackPerformance(WebGLVectorTileLayerRenderer);
     }
     showGraph();
