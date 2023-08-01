@@ -722,7 +722,7 @@ export const XPlanStyles: LiteralStyle[] = base.layers
       switch (prop) {
         case "fill-outline-color":
           style["stroke-color"] = value;
-          style["stroke-width"] = style["stroke-width"] || 0.75;
+          style["stroke-width"] = style["stroke-width"] || 1.5;
           break;
         case "fill-color":
           style["fill-color"] = value;
@@ -733,6 +733,15 @@ export const XPlanStyles: LiteralStyle[] = base.layers
         case "line-width":
           // style["stroke-width"] = value;
           style["stroke-width"] = ["/", value, 2]; // FIXME: width in OL shaders is doubled! this is a bug
+          break;
+        case "line-cap":
+          style["stroke-line-cap"] = value;
+          break;
+        case "line-join":
+          style["stroke-line-join"] = value;
+          break;
+        case "line-offset":
+          style["stroke-offset"] = ["*", -0.5, value]; // FIXME
           break;
         case "icon-size":
           style["symbol"] = {
