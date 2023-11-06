@@ -22,12 +22,12 @@ import {
   trackPerformance,
 } from "@camptocamp/rendering-analyzer";
 import MapLibreLayer from "@geoblocks/ol-maplibre-layer/build/ol-maplibre-layer";
-import { XPlanStyles } from "./xplan-styles";
+import { getXplanStyles } from "./xplan-styles";
 
 class WebGLVectorTileLayer extends VectorTileLayer {
   createRenderer() {
     return new WebGLVectorTileLayerRenderer(this, {
-      style: XPlanStyles,
+      style: this.get("webGLStyle"),
     });
   }
 }
@@ -81,7 +81,7 @@ btnAnalyzer.addEventListener("click", () => {
 const STYLE_URL =
   "https://xplanung.ldproxy.devops.diplanung.de/rest/services/xplansyn/styles/xplansyn?f=mbs";
 
-async function initMap() {
+async function initMap(styles) {
   let vectorTileLayer;
   if (renderer === "canvas") {
     vectorTileLayer = new VectorTileLayer({
@@ -92,7 +92,9 @@ async function initMap() {
       accessToken: "mvt",
     });
   } else if (renderer === "webgl") {
-    vectorTileLayer = new WebGLVectorTileLayer({});
+    vectorTileLayer = new WebGLVectorTileLayer({
+      webGLStyle: styles,
+    });
     await applyStyle(vectorTileLayer, STYLE_URL, {
       accessTokenParam: "f",
       accessToken: "mvt",
@@ -144,4 +146,8 @@ async function initMap() {
   });
   map.addInteraction(new Link());
 }
-initMap();
+
+getXplanStyles().then((styles) => {
+  console.log(JSON.stringify(styles, null, "  "));
+  initMap(styles);
+});

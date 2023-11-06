@@ -1,4 +1,4 @@
-import LiteralStyle from "ol/build/ol/style/literal";
+import WebGLStyle from "ol/build/ol/style/webgl";
 
 const base = {
   version: 8,
@@ -699,63 +699,74 @@ function fixExpression(expression) {
   return [expression[0], ...expression.slice(1).map(fixExpression)];
 }
 
-export const XPlanStyles: LiteralStyle[] = base.layers
-  .filter(
-    (layer) => layer.layout?.visibility !== "none" && layer.type !== "raster"
-  )
-  .map((layer) => {
-    const filters: any[] = [["==", ["get", "layer"], layer["source-layer"]]];
-    if (layer.filter) {
-      filters.push(fixExpression(layer.filter));
-    }
-    if (layer.maxzoom) {
-      filters.push(["<", ["zoom"], layer.maxzoom]);
-    }
-    if (layer.minzoom) {
-      filters.push([">", ["zoom"], layer.minzoom]);
-    }
+export async function getXplanStyles(): Promise<WebGLStyle> {
+  const spritesheet = await fetch(`${base.sprite}.json`).then((resp) =>
+    resp.json()
+  );
+  const spritesPath = `${base.sprite}.png`;
 
-    const style = {};
-    const props = { ...layer.paint, ...layer.layout };
-    for (const prop in props) {
-      const value = fixExpression(props[prop]);
-      switch (prop) {
-        case "fill-outline-color":
-          style["stroke-color"] = value;
-          style["stroke-width"] = style["stroke-width"] || 1.5;
-          break;
-        case "fill-color":
-          style["fill-color"] = value;
-          break;
-        case "line-color":
-          style["stroke-color"] = value;
-          break;
-        case "line-width":
-          // style["stroke-width"] = value;
-          style["stroke-width"] = ["/", value, 2]; // FIXME: width in OL shaders is doubled! this is a bug
-          break;
-        case "line-cap":
-          style["stroke-line-cap"] = value;
-          break;
-        case "line-join":
-          style["stroke-line-join"] = value;
-          break;
-        case "line-offset":
-          style["stroke-offset"] = ["*", -0.5, value]; // FIXME
-          break;
-        case "icon-size":
-          style["symbol"] = {
-            symbolType: "square",
-            size: value,
-          };
-          break;
+  return base.layers
+    .filter(
+      (layer) => layer.layout?.visibility !== "none" && layer.type !== "raster"
+    )
+    .map((layer) => {
+      const filters: any[] = [["==", ["get", "layer"], layer["source-layer"]]];
+      if (layer.filter) {
+        filters.push(fixExpression(layer.filter));
       }
-    }
+      if (layer.maxzoom) {
+        filters.push(["<", ["zoom"], layer.maxzoom]);
+      }
+      if (layer.minzoom) {
+        filters.push([">", ["zoom"], layer.minzoom]);
+      }
 
-    return {
-      filter: filters.length === 1 ? filters[0] : ["all", ...filters],
-      ...style,
-    };
-  });
+      const style = {};
+      const props = { ...layer.paint, ...layer.layout };
+      for (const prop in props) {
+        const value = fixExpression(props[prop]);
+        switch (prop) {
+          case "fill-outline-color":
+            style["stroke-color"] = value;
+            style["stroke-width"] = style["stroke-width"] || 1.5;
+            break;
+          case "fill-color":
+            style["fill-color"] = value;
+            break;
+          case "fill-pattern":
+            const spriteId = value;
+            const spriteInfo = spritesheet[spriteId];
+            style["fill-pattern-src"] = spritesPath;
+            style["fill-pattern-offset"] = [spriteInfo.x, spriteInfo.y];
+            style["fill-pattern-size"] = [spriteInfo.width, spriteInfo.height];
+            break;
+          case "line-color":
+            style["stroke-color"] = value;
+            break;
+          case "line-width":
+            style["stroke-width"] = ["/", value, 2]; // FIXME: width in OL shaders is doubled! this is a bug
+            break;
+          case "line-cap":
+            style["stroke-line-cap"] = value;
+            break;
+          case "line-join":
+            style["stroke-line-join"] = value;
+            break;
+          case "line-offset":
+            style["stroke-offset"] = ["/", value, 2]; // FIXME: width in OL shaders is doubled! this is a bug
+            break;
+          case "icon-size":
+            style["symbol"] = {
+              symbolType: "square",
+              size: value,
+            };
+            break;
+        }
+      }
 
-console.log(JSON.stringify(XPlanStyles, null, "  "));
+      return {
+        filter: filters.length === 1 ? filters[0] : ["all", ...filters],
+        ...style,
+      };
+    });
+}
