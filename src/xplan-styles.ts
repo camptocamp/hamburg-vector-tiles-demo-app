@@ -733,13 +733,14 @@ export async function getXplanStyles(): Promise<WebGLStyle> {
           case "fill-color":
             style["fill-color"] = value;
             break;
-          case "fill-pattern":
-            const spriteId = value;
-            const spriteInfo = spritesheet[spriteId];
+          case "fill-pattern": {
+            const spriteInfo = spritesheet[value];
             style["fill-pattern-src"] = spritesPath;
             style["fill-pattern-offset"] = [spriteInfo.x, spriteInfo.y];
             style["fill-pattern-size"] = [spriteInfo.width, spriteInfo.height];
+            style["fill-pattern-scale"] = 64 / spriteInfo.width;
             break;
+          }
           case "line-color":
             style["stroke-color"] = value;
             break;
@@ -755,11 +756,30 @@ export async function getXplanStyles(): Promise<WebGLStyle> {
           case "line-offset":
             style["stroke-offset"] = ["/", value, 2]; // FIXME: width in OL shaders is doubled! this is a bug
             break;
-          case "icon-size":
-            style["symbol"] = {
-              symbolType: "square",
-              size: value,
-            };
+          case "icon-image": {
+            const spriteInfo = spritesheet[value];
+            if (props["symbol-placement"] === "point") {
+              style["icon-src"] = spritesPath;
+              style["icon-offset"] = [spriteInfo.x, spriteInfo.y];
+              style["icon-size"] = [spriteInfo.width, spriteInfo.height];
+              style["icon-scale"] = fixExpression(props["icon-size"]);
+            } else if (props["symbol-placement"] === "line") {
+              style["stroke-pattern-src"] = spritesPath;
+              style["stroke-pattern-offset"] = [spriteInfo.x, spriteInfo.y];
+              style["stroke-pattern-size"] = [
+                spriteInfo.width,
+                spriteInfo.height,
+              ];
+              style["stroke-width"] = [
+                "*",
+                fixExpression(props["icon-size"]),
+                spriteInfo.height * 0.5,
+              ];
+            }
+            break;
+          }
+          case "symbol-spacing":
+            style["stroke-pattern-spacing"] = ["*", 0.5, value];
             break;
         }
       }
