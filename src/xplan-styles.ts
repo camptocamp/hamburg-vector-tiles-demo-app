@@ -714,11 +714,20 @@ export async function getXplanStyles(): Promise<WebGLStyle> {
       if (layer.filter) {
         filters.push(fixExpression(layer.filter));
       }
+      // convert zoom to web mercator resolution
       if (layer.maxzoom) {
-        filters.push(["<", ["zoom"], layer.maxzoom]);
+        filters.push([
+          ">",
+          ["resolution"],
+          156543.03392804097 / Math.pow(2, layer.maxzoom),
+        ]);
       }
       if (layer.minzoom) {
-        filters.push([">", ["zoom"], layer.minzoom]);
+        filters.push([
+          "<",
+          ["resolution"],
+          156543.03392804097 / Math.pow(2, layer.minzoom),
+        ]);
       }
 
       const style = {};
